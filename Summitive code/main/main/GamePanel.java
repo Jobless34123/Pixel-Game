@@ -11,6 +11,8 @@ Implements Runnable interface to use "threading" - let the game do two things at
 
 
 import entity.*;
+import tile.TileMaker;
+
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -19,14 +21,15 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 
   //dimensions of window
 
-  final int originalTileSize = 32;//16x16 tile
-  final int scale = 4;
+  final int originalTileSize = 24;//32x32 tile
+  final int scale = 6;
   public final int TileSize = originalTileSize*scale;
-  final int maxScreenHeight = 6;//in terms of tiles
+  final int maxScreenHeight = 8;//in terms of tiles
   final int maxScreenWidth = 8;//in terms of tiles
   final int GAME_WIDTH = TileSize*maxScreenWidth;
   final int GAME_HEIGHT = TileSize*maxScreenHeight;
 
+  TileMaker tileM = new TileMaker(this);
   KeyHandler keyH = new KeyHandler();  
 
   public Thread gameThread;
@@ -61,14 +64,14 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
     graphics = image.getGraphics();
     draw(graphics);//update the positions of everything on the screen 
     g.drawImage(image, 0, 0, this); //move the image on the screen
-
-    Graphics g2 = (Graphics2D)g;
+    Graphics g2 = (Graphics2D)g; 
     g2.dispose();
 
   }
 
   //call the draw methods in each class to update positions as things move
   public void draw(Graphics g2){
+    tileM.draw(g2);
     player.draw(g2);
   }
 
