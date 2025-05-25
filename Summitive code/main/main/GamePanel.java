@@ -17,25 +17,33 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 
+import building.BuildHandler;
+
 public class GamePanel extends JPanel implements Runnable, KeyListener{
 
   //dimensions of window
 
-  final int originalTileSize = 24;//32x32 tile
-  final int scale = 6;
+  final int originalTileSize = 32;//32x32 tile
+  final int scale = 3;
   public final int TileSize = originalTileSize*scale;
-  final int maxScreenHeight = 8;//in terms of tiles
-  final int maxScreenWidth = 8;//in terms of tiles
-  final int GAME_WIDTH = TileSize*maxScreenWidth;
-  final int GAME_HEIGHT = TileSize*maxScreenHeight;
+  public final int maxScreenHeight = 10;//in terms of tiles
+  public final int maxScreenWidth = 10;//in terms of tiles
+  public final int GAME_WIDTH = TileSize*maxScreenWidth;
+  public final int GAME_HEIGHT = TileSize*maxScreenHeight;
 
-  TileMaker tileM = new TileMaker(this);
+  public final int MAP_WIDTH=50;//map size in tiles
+  public final int MAP_HEIGHT=50;
+  public final int MAX_MAP_WIDTH=MAP_WIDTH*TileSize; //map size in pixels
+  public final int MAX_MAP_HEIGHT=MAP_HEIGHT*TileSize;
+
   KeyHandler keyH = new KeyHandler();  
-
   public Thread gameThread;
   public Image image;
   public Graphics graphics;
   public Player player = new Player(this, keyH);
+  public BuildHandler buildH = new BuildHandler(this, keyH);
+  
+  public TileMaker tileM = new TileMaker(this, keyH);
 
   public GamePanel(){
     
@@ -62,15 +70,15 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
     //we are using "double buffering here" - if we draw images directly onto the screen, it takes time and the human eye can actually notice flashes of lag as each pixel on the screen is drawn one at a time. Instead, we are going to draw images OFF the screen, then simply move the image on screen as needed. 
     image = createImage(GAME_WIDTH, GAME_HEIGHT); //draw off screen
     graphics = image.getGraphics();
-    draw(graphics);//update the positions of everything on the screen 
     g.drawImage(image, 0, 0, this); //move the image on the screen
-    Graphics g2 = (Graphics2D)g; 
+    Graphics2D g2 = (Graphics2D)g; 
+    draw(g2);
     g2.dispose();
 
   }
 
   //call the draw methods in each class to update positions as things move
-  public void draw(Graphics g2){
+  public void draw(Graphics2D g2){
     tileM.draw(g2);
     player.draw(g2);
   }
@@ -83,6 +91,11 @@ public class GamePanel extends JPanel implements Runnable, KeyListener{
 
   public void update(){    
     player.update();
+    tileM.update();
+    if (keyH.enterPressed) {
+      buildH.build();
+      keyH.enterPressed = false;
+    }
   }
   //run() method is what makes the game continue running without end. It calls other methods to move objects,  check for collision, and update the screen
   public void run(){
