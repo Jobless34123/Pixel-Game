@@ -27,6 +27,12 @@ public class Player extends Entity {
         screenX = (gp.GAME_WIDTH / 2) - (gp.TileSize / 2);
         screenY = (gp.GAME_HEIGHT / 2) - (gp.TileSize / 2);
 
+        hitBox = new Rectangle();     //Hit box change for collision
+        hitBox.x=10*gp.scale;
+        hitBox.y=15*gp.scale;
+        hitBox.width=12*gp.scale;
+        hitBox.height=14*gp.scale;
+
         setValues();
         getPlayerImage();
         direction = "left";
@@ -43,30 +49,66 @@ public class Player extends Entity {
     }
 
     public void update(){
-        //save previous position if you want to revert on collision
-        int previousX = worldX;
-        int previousY = worldY;
 
         //movement
-        if(keyH.upPressed){
-            direction = "up";
-            worldY -= speed;
-        }
-        if(keyH.downPressed){
-            direction = "down";
-            worldY += speed;
-        }
-        if(keyH.leftPressed){
-            direction = "left";
-            worldX -= speed;
-        }
-        if(keyH.rightPressed){
-            direction = "right";
-            worldX += speed;
+        playerX=worldX/gp.TileSize;
+        playerY=worldY/gp.TileSize;
+        if(keyH.upPressed||keyH.downPressed||keyH.leftPressed||keyH.rightPressed){
+            spriteCounter++;
+
+            //check tile collision
+            collisionOn=false;
+            gp.collisionChecker.checkTile(this);;
+
+            if(keyH.upPressed){
+                direction = "up";
+            }
+            if(keyH.downPressed){
+                direction = "down";
+            }
+            if(keyH.leftPressed){
+                direction = "left";
+            }
+            if(keyH.rightPressed){
+                direction = "right";
+            }
+
+            // if collision false, player moves
+
+            if(!collisionOn){
+                if(keyH.upPressed){
+                    direction = "up";
+                    worldY-=speed;
+                }
+                if(keyH.downPressed){
+                    direction = "down";
+                    worldY+=speed;
+                }
+                if(keyH.leftPressed){
+                    direction = "left";
+                    worldX-=speed;
+                }
+                if(keyH.rightPressed){
+                    direction = "right";
+                    worldX+=speed;
+                }
+            }
+            //to cycle between different sprites
+            if(spriteCounter>10){
+                if(spriteNum==1){
+                    spriteNum++;
+                }else if(spriteNum==2){
+                    spriteNum++;
+                }else if(spriteNum==3){
+                    spriteNum++;
+                }else if(spriteNum==4){
+                    spriteNum=1;
+                }
+                spriteCounter=0;
+            }
         }
 
-        //update the inherited Rectangle bounds after moving.
-        setBounds(worldX, worldY, gp.TileSize, gp.TileSize);
+
 
         //sprite (animation) update
         if(keyH.upPressed || keyH.downPressed || keyH.leftPressed || keyH.rightPressed){
@@ -76,6 +118,8 @@ public class Player extends Entity {
                 spriteCounter = 0;
             }
         }
+        //update the inherited Rectangle bounds after moving.
+        setBounds(worldX, worldY, gp.TileSize, gp.TileSize);
     }
 
     public void getPlayerImage(){
@@ -160,5 +204,8 @@ public class Player extends Entity {
         //for visual debugging this draws the collision boundary (a semi-transparent red rectangle). jk its aimbot
         g2.setColor(new Color(255, 0, 0, 100));
         g2.drawRect(screenX, screenY, gp.TileSize, gp.TileSize);
+        //hitbox
+        g2.setColor(new Color(0, 115, 255, 100));
+        g2.fillRect(screenX+hitBox.x, screenY+hitBox.y, hitBox.width, hitBox.height);
     }
 }

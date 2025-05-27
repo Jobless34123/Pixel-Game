@@ -13,7 +13,7 @@ import main.KeyHandler;
 public class TileMaker {
     GamePanel gp;
     main.KeyHandler keyH;
-    Tile[] tile;
+    public Tile[] tile;
     public int [][] mapTileNum;
     public TileMaker(GamePanel gp, KeyHandler keyH){
         this.gp = gp;
@@ -28,6 +28,7 @@ public class TileMaker {
         try {
             tile[0] = new Tile();
             tile[0].image = ImageIO.read(getClass().getResourceAsStream("../resources/tiles/Tile_Water.png"));//0
+            tile[0].collision=true;
             tile[1] = new Tile();
             tile[1].image = ImageIO.read(getClass().getResourceAsStream("../resources/tiles/Tile_Grass.png"));//1
             tile[2] = new Tile();
@@ -64,7 +65,7 @@ public class TileMaker {
             while(height<gp.MAP_HEIGHT&&width<gp.MAP_WIDTH){
                 String line = br.readLine();
                 while(width<gp.MAP_WIDTH){
-                    String numbers[] = line.split(" "); 
+                    String numbers[] = line.split(" ");
                     int num = Integer.parseInt(numbers[width]);
                     mapTileNum[height][width] = num;
                     width++;
@@ -89,7 +90,7 @@ public class TileMaker {
             while(height<gp.MAP_HEIGHT&&width<gp.MAP_WIDTH){
                 String line = br.readLine();
                 while(width<gp.MAP_WIDTH){
-                    String numbers[] = line.split(" "); 
+                    String numbers[] = line.split(" ");
                     int num = Integer.parseInt(numbers[width]);
                     mapTileNum[height][width] = num;
                     width++;
@@ -114,15 +115,15 @@ public class TileMaker {
             int worldY = height*gp.TileSize;
             int screenX = worldX - gp.player.worldX + gp.player.screenX;
             int screenY = worldY - gp.player.worldY + gp.player.screenY;
-            
+
             g2.drawImage(tile[tileNum].image, screenX, screenY, gp.TileSize, gp.TileSize, null);
             width++;
             if(width>=gp.MAP_WIDTH){
                 width=0;
                 height++;
-                
+
             }
-        
+
         }
     }
 }
