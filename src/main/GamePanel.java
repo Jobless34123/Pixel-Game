@@ -1,5 +1,12 @@
 package main;
 
+/*
+Core game loop and rendering panel for the 2D tile-based game.
+Manages drawing, updates, input handling, collision enforcement,
+and delegates to Player, TileMaker, and BuildHandler.
+Implements Runnable for a fixed-tick game loop at around 60 FPS.
+ */
+
 import entity.*;
 import tile.TileMaker;
 import building.BuildHandler;
@@ -13,12 +20,13 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
 
   //dimensions for the window (in pixels and tiles)
   final int originalTileSize = 32; // tile
-  public final int scale = 3;                                                  // changed to public
+  public final int scale = 3;
   public final int TileSize = originalTileSize * scale;
   public final int maxScreenHeight = 10; // in tiles
   public final int maxScreenWidth = 10;  // in tiles
   public final int GAME_WIDTH = TileSize * maxScreenWidth;
   public final int GAME_HEIGHT = TileSize * maxScreenHeight;
+  public ArrayList<Entity> buildings;
 
   public final int MAP_WIDTH = 50;  // map size in tiles
   public final int MAP_HEIGHT = 50;
@@ -38,33 +46,57 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
   //dedicated collision checker instance :))
   public CollisionChecker collisionChecker = new CollisionChecker(this);        //CHANGE:  this added in bracket
 
-  public GamePanel(){
+  public GamePanel() {
     this.setPreferredSize(new Dimension(GAME_WIDTH, GAME_HEIGHT));
     this.setDoubleBuffered(true);
     this.setFocusable(true);
     this.addKeyListener(keyH);
 
-
     addMouseListener(new MouseAdapter() {
       public void mousePressed(MouseEvent e) {
-        // additional mouse functionality can be added here.
+        //mouse functionality
       }
     });
 
-    //initialize your tile maker (which loads the map from a text file);   TREE UPDATE
-    tileM = new TileMaker(this, keyH);
+    // Initialize systems
+    tileM = new TileMaker(this, keyH);  //tile manager
+    generateTrees();           //generate trees
 
-    //generate trees based on the tile map (only on land tiles: tile number 1).    TREE UPDATE
-    generateTrees();
+    //NEW updatee: Initialize buildings list before creating player/buildHandler
+    buildings = new ArrayList<>();
 
-    //Continue initializing other objects      TREE UPDATE
     player = new Player(this, keyH);
     buildH = new BuildHandler(this, keyH);
 
-    //start the game thread.
+    // Start game thread
     gameThread = new Thread(this);
     gameThread.start();
   }
+
+  //chop tree
+  private void tryChopTree() {
+    Point target = buildH.getTargetTile();
+    int targetWorldX = target.x * TileSize;  // Convert to world coordinates
+    int targetWorldY = target.y * TileSize;
+
+    for(int i = 0; i < trees.size(); i++) {
+      Tree tree = trees.get(i);
+      Rectangle treeBounds = tree.getBounds();
+
+      // Check if player is facing the tree and within chopping range
+      if(treeBounds.contains(targetWorldX, targetWorldY)) {
+        int woodYield = tree.chop();
+        if(woodYield > 0) {
+          player.addWood(woodYield);
+          trees.remove(i);
+          i--; // Adjust index after removal
+        }
+        break;
+      }
+    }
+  }
+
+
 
 
   public void generateTrees() {        // TREE UPDATE
@@ -119,9 +151,15 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
   }
 
   //draws game assets.
-  public void draw(Graphics2D g2){
+  public void draw(Graphics2D g2) {
     tileM.draw(g2);
 
+    // Draw buildings
+    for (Entity building : buildings) {
+      int screenX = building.worldX - player.worldX + player.screenX;
+      int screenY = building.worldY - player.worldY + player.screenY;
+      g2.drawImage(building.image, screenX, screenY, building.width, building.height, null);
+    }
     //draw trees (these are drawn before the player so that the player can appear on top if desired)    TREE UPDATE
     for (Tree tree : trees) {
       tree.draw(g2, this);
@@ -149,30 +187,29 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
     // update player bounds after corrections.
     player.setBounds(player.worldX, player.worldY, TileSize, TileSize);
 
-    //additional static or dynamic obstacles could be added into an obstacles list.
-    //t hen loop through:
-        /*
-        for (Entity obstacle : obstacles) {
-            if (collisionChecker.checkCollision(player, obstacle)) {
-                // Collision response (e.g., revert player.position)
-            }
-        }
-        this should work..
-        */
+
   }
 
   public void update(){
     player.update();
     tileM.update();
 
+    //build update --> building with F and R key
+    if(keyH.buildFloor || keyH.buildWall) {
+      buildH.tryBuild();
+      //reset flags after handling
+      keyH.buildFloor = false;
+      keyH.buildWall = false;
+    }
+
+    // Tree chopping
+    if(keyH.chopTree) {
+      tryChopTree();
+      keyH.chopTree = false;
+    }
+
     //perform collision checks after moving objects.
     checkCollision();
-
-    //trigger building functionality if the key was pressed.
-    if (keyH.enterPressed) {
-      buildH.build();
-      keyH.enterPressed = false;
-    }
   }
 
   public void run(){

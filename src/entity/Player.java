@@ -1,5 +1,7 @@
 package entity;
 
+// description: This is a java class for the player.
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
@@ -18,6 +20,26 @@ public class Player extends Entity {
 
     public int playerX;
     public int playerY;
+
+    //WOOD WOOD WOOD WOOD WOOD WOOD WOOD WOOD WOOD WOOD WOOD WOOD
+    private int wood = 0;
+
+    public void addWood(int amount) {
+        wood += amount;
+    }
+
+    public boolean spendWood(int amount) {
+        if(wood >= amount) {
+            wood -= amount;
+            return true;
+        }
+        return false;
+    }
+
+    public int getWood() {
+        return wood;
+    }
+
 
     public Player(GamePanel gp, KeyHandler keyH){
         this.gp = gp;
