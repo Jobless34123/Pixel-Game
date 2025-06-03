@@ -1,6 +1,4 @@
-package main;
 
-import entity.Entity;
 
 public class CollisionChecker {
 
@@ -40,7 +38,7 @@ public class CollisionChecker {
             }
         }
         if(entity.direction.equals("down")){
-            entityBottomMapY = (entityBottomWorldY - entity.speed+5)/gp.TileSize;
+            entityBottomMapY = (entityBottomWorldY - entity.speed)/gp.TileSize;
             tileNum1 = gp.tileM.mapTileNum[entityBottomMapY][entityLeftMapX];
             tileNum2 = gp.tileM.mapTileNum[entityBottomMapY][entityRightMapX];
             if(gp.tileM.tile[tileNum1].collision||gp.tileM.tile[tileNum2].collision){
@@ -56,7 +54,7 @@ public class CollisionChecker {
             }
         }
         if(entity.direction.equals("right")){
-            entityRightMapX = (entityRightWorldX - entity.speed+6)/gp.TileSize;
+            entityRightMapX = (entityRightWorldX - entity.speed)/gp.TileSize;
             tileNum1 = gp.tileM.mapTileNum[entityTopMapY][entityRightMapX];
             tileNum2 = gp.tileM.mapTileNum[entityBottomMapY][entityRightMapX];
             if(gp.tileM.tile[tileNum1].collision||gp.tileM.tile[tileNum2].collision){
