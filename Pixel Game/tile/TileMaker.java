@@ -53,6 +53,7 @@ public class TileMaker {
             tile[9].image = ImageIO.read(getClass().getResourceAsStream("../resources/tiles/Tile_Sand_Bottom_Right.png"));//9
             tile[10] = new Tile();
             tile[10].image = ImageIO.read(getClass().getResourceAsStream("../resources/building/Wall_Middle.png"));//10
+            tile[10].collision=false;
             // ... continue with all your existing tile definitions ...
 
         } catch (Exception e) {

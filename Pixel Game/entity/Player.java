@@ -79,7 +79,7 @@ public class Player extends Entity {
 
             //check tile collision
             collisionOn=false;
-            gp.collisionChecker.checkTile(this);;
+            gp.collisionChecker.checkTile(this);
 
             if(keyH.upPressed){
                 direction = "up";

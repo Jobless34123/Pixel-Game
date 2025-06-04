@@ -62,10 +62,10 @@ public class BuildHandler {
         }
         else if(keyH.buildWall) {
             // Can build walls on land or existing floors
-            if((gp.tileM.mapTileNum[targetY][targetX] == 1 || hasFloorAt(targetX, targetY)) &&
+            if((!gp.tileM.tile[gp.tileM.mapTileNum[targetY][targetX]].collision || hasFloorAt(targetX, targetY)) &&
                     player.spendWood(2)) {
                 gp.buildings.add(new Wall(gp, targetX * gp.TileSize, targetY * gp.TileSize));
-                gp.tileM.mapTileNum[targetY][targetX]=0;
+                gp.tileM.mapTileNum[targetY][targetX]=10;
             }
         }
     }

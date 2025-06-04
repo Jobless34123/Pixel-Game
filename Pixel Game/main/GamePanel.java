@@ -47,7 +47,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
   public TileMaker tileM = new TileMaker(this, keyH);
   public ArrayList<Tree> trees;
   public ArrayList<Zombie> zombies;
-  public final int totalZombies=5;
+  public final int totalZombies=10;
   public int aliveZombies=totalZombies;
 
 

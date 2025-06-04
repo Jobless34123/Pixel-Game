@@ -83,8 +83,8 @@ public class Zombie extends Entity {
     }
     public void update(){
         setAction();
-        gp.collisionChecker.checkTile(this);
         collisionOn=false;
+        gp.collisionChecker.checkTile(this);
         if(!collisionOn){
         switch (direction) {
             case "up":
