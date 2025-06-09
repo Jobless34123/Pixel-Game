@@ -1,34 +1,16 @@
-
-
-/*
-NOTE: This will not make the final cut as it replaces the tile to place a new tile. Rather than this.
-      We will make a building object class in package entity for more control and collision detection.
-
-      This was just for testing incase we need it for smth completely unrated to building
-
-Responsible for handling the player's block-building actions in the game.
-Determines the target tile based on player position and direction,
-checks bounds, and toggles tile states (build/destroy).
-
-Dependencies:
- - GamePanel: provides game state and map dimensions.
- - KeyHandler: tracks player input (e.g., build key pressed).
- */
-
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-
 import javax.imageio.ImageIO;
 
 public class TileMaker {
-    GamePanel gp;
-    KeyHandler keyH;
-    public Tile[] tile;
-    public int [][] mapTileNum;
-    public TileMaker(GamePanel gp, KeyHandler keyH){
+    GamePanel gp; // GamePanel is now visible
+    KeyHandler keyH; // KeyHandler is now visible
+    public Tile[] tile; // Tile is now visible
+    public int[][] mapTileNum;
+
+    public TileMaker(GamePanel gp, KeyHandler keyH) {
         this.gp = gp;
         this.keyH = keyH;
         tile = new Tile[20];
@@ -37,8 +19,8 @@ public class TileMaker {
         map();
     }
 
-    //loads tile images into the tile array and sets collision flags.
-    public void getTileImage(){
+    //loads tile images into the tile array and sets collision flags
+    public void getTileImage() {
         try {
             tile[0] = new Tile();
             tile[0].image = ImageIO.read(getClass().getResourceAsStream("/resources/tiles/Tile_Water.png"));//0
@@ -62,32 +44,37 @@ public class TileMaker {
             tile[9] = new Tile();
             tile[9].image = ImageIO.read(getClass().getResourceAsStream("/resources/tiles/Tile_Sand_Bottom_Right.png"));//9
             tile[10] = new Tile();
-            tile[10].image = ImageIO.read(getClass().getResourceAsStream("/resources/tiles/Wall_Middle.png"));//10
+            tile[10].image = ImageIO.read(getClass().getResourceAsStream("/resources/building/Wall_Middle.png"));//10
+            // ... continue with all your existing tile definitions ...
+
         } catch (Exception e) {
+            e.printStackTrace();
         }
     }
-    public void update(){
+
+    public void update() {
+        //empty for now - could be used for animated tiles later
     }
+
     //reads the map layout from a text file
-    //each line in the file corresponds to a row of tile indices
-    public void map(){
+    public void map() {
         try {
             InputStream is = getClass().getResourceAsStream("/maps/TestMap.txt");
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
 
-            int width=0;
-            int height=0;
+            int width = 0;
+            int height = 0;
 
-            while(height<gp.MAP_HEIGHT&&width<gp.MAP_WIDTH){
+            while (height < gp.MAP_HEIGHT && width < gp.MAP_WIDTH) {
                 String line = br.readLine();
-                while(width<gp.MAP_WIDTH){
-                    String numbers[] = line.split(" ");
+                while (width < gp.MAP_WIDTH) {
+                    String[] numbers = line.split(" ");
                     int num = Integer.parseInt(numbers[width]);
                     mapTileNum[height][width] = num;
                     width++;
                 }
-                if(width == gp.MAP_WIDTH){
-                    width=0;
+                if (width == gp.MAP_WIDTH) {
+                    width = 0;
                     height++;
                 }
             }
@@ -97,37 +84,26 @@ public class TileMaker {
         }
     }
 
-    //draws all tiles within the map, offset by the player's position.
-    //calculates screen coordinates for each tile to render only visible area.
-    // graphics2D g2 context used for rendering
-    public void draw(Graphics2D g2){
-        int height=0;
-        int width=0;
-        while (height<gp.MAP_HEIGHT&& width<gp.MAP_WIDTH) {
-            int tileNum = mapTileNum[height][width];
+    //renders all visible tiles
+    public void draw(Graphics2D g2) {
+        for (int height = 0; height < gp.MAP_HEIGHT; height++) {
+            for (int width = 0; width < gp.MAP_WIDTH; width++) {
+                int tileNum = mapTileNum[height][width];
+                int worldX = width * gp.TileSize;
+                int worldY = height * gp.TileSize;
 
-            int worldX = width*gp.TileSize;
-            int worldY = height*gp.TileSize;
-            int screenX = worldX - gp.player.worldX + gp.player.screenX;
-            int screenY = worldY - gp.player.worldY + gp.player.screenY;
-
-            g2.drawImage(tile[tileNum].image, screenX, screenY, gp.TileSize, gp.TileSize, null);
-            width++;
-            if(width>=gp.MAP_WIDTH){
-                width=0;
-                height++;
-
-            }
-
-        }
-        if(gp.zombies.onPath){
-            g2.setColor(new Color(255,0,0,70));
-            for(int i=0;i<gp.pathFinder.pathList.size();i++){
-                int worldX = gp.pathFinder.pathList.get(i).col*gp.TileSize;
-                int worldY = gp.pathFinder.pathList.get(i).row*gp.TileSize;
+                //convert world coordinates to screen coordinates
                 int screenX = worldX - gp.player.worldX + gp.player.screenX;
                 int screenY = worldY - gp.player.worldY + gp.player.screenY;
-                g2.fillRect(screenX, screenY, gp.TileSize, gp.TileSize);
+
+                //only draw tiles that are potentially visible
+                if (worldX + gp.TileSize > gp.player.worldX - gp.player.screenX &&
+                        worldX - gp.TileSize < gp.player.worldX + gp.player.screenX &&
+                        worldY + gp.TileSize > gp.player.worldY - gp.player.screenY &&
+                        worldY - gp.TileSize < gp.player.worldY + gp.player.screenY) {
+
+                    g2.drawImage(tile[tileNum].image, screenX, screenY, gp.TileSize, gp.TileSize, null);
+                }
             }
         }
     }

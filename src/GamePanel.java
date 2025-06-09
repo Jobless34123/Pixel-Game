@@ -1,12 +1,9 @@
-
-
 /*
 Core game loop and rendering panel for the 2D tile-based game.
 Manages drawing, updates, input handling, collision enforcement,
 and delegates to Player, TileMaker, and BuildHandler.
 Implements Runnable for a fixed-tick game loop at around 60 FPS.
  */
-
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -18,19 +15,22 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
 
   //dimensions for the window (in pixels and tiles)
   final int originalTileSize = 32; // tile
-  public final int scale = 2;
+  public final int scale = 3;
   public final int TileSize = originalTileSize * scale;
-  public final int maxScreenHeight = 15; // in tiles
-  public final int maxScreenWidth = 15;  // in tiles
+  public final int maxScreenHeight = 10; // in tiles
+  public final int maxScreenWidth = 10;  // in tiles
   public final int GAME_WIDTH = TileSize * maxScreenWidth;
   public final int GAME_HEIGHT = TileSize * maxScreenHeight;
+  public PathFinder pathFinder = new PathFinder(this);
+  public ArrayList<Entity> buildings;
+
+  
+  public UI ui = new UI(this);
 
   public final int MAP_WIDTH = 50;  // map size in tiles
   public final int MAP_HEIGHT = 50;
   public final int MAX_MAP_WIDTH = MAP_WIDTH * TileSize;   // map size in pixels
   public final int MAX_MAP_HEIGHT = MAP_HEIGHT * TileSize;
-
-  ArrayList<Entity> entities = new ArrayList<>();
 
   KeyHandler keyH = new KeyHandler();
   public Thread gameThread;
@@ -38,43 +38,72 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
   public Graphics graphics;
 
   public Player player = new Player(this, keyH);
-  public Zombie zombies = new Zombie(this);
   public BuildHandler buildH = new BuildHandler(this, keyH);
   public TileMaker tileM = new TileMaker(this, keyH);
   public ArrayList<Tree> trees;
-  public PathFinder pathFinder = new PathFinder(this);
+  public ArrayList<Zombie> zombies;
+
 
   //dedicated collision checker instance :))
   public CollisionChecker collisionChecker = new CollisionChecker(this);        //CHANGE:  this added in bracket
 
-  public GamePanel(){
+  public GamePanel() {
     this.setPreferredSize(new Dimension(GAME_WIDTH, GAME_HEIGHT));
     this.setDoubleBuffered(true);
     this.setFocusable(true);
     this.addKeyListener(keyH);
-    
-    player = new Player(this, keyH);
-
 
     addMouseListener(new MouseAdapter() {
       public void mousePressed(MouseEvent e) {
-        // additional mouse functionality can be added here.
+        //mouse functionality
       }
     });
 
-    //initialize your tile maker (which loads the map from a text file);   TREE UPDATE
-    tileM = new TileMaker(this, keyH);
+    // Initialize systems
+    tileM = new TileMaker(this, keyH);  //tile manager
+    generateTrees();           //generate trees
+    
+    generateZombies();
 
-    //generate trees based on the tile map (only on land tiles: tile number 1).    TREE UPDATE
-    generateTrees();
+    //NEW updatee: Initialize buildings list before creating player/buildHandler
+    buildings = new ArrayList<>();
 
-    //Continue initializing other objects      TREE UPDATE
+    player = new Player(this, keyH);
     buildH = new BuildHandler(this, keyH);
-    pathFinder = new PathFinder(this);
-    zombies = new Zombie(this);
-    //start the game thread.
+
+    // Start game thread
     gameThread = new Thread(this);
     gameThread.start();
+  }
+
+  //chop tree
+  private void tryChopTree() {
+    Point target = buildH.getTargetTile();
+    int targetWorldX = target.x * TileSize;  // Convert to world coordinates
+    int targetWorldY = target.y * TileSize;
+
+    for(int i = 0; i < trees.size(); i++) {
+      Tree tree = trees.get(i);
+      Rectangle treeBounds = tree.getBounds();
+
+      // Check if player is facing the tree and within chopping range
+      if(treeBounds.contains(targetWorldX, targetWorldY)) {
+        int woodYield = tree.chop();
+        if(woodYield > 0) {
+          player.addWood(woodYield);
+          trees.remove(i);
+          i--; // Adjust index after removal
+        }
+        break;
+      }
+    }
+  }
+
+  public void generateZombies(){
+    zombies = new ArrayList<>();
+    for(int x=0;x<5;x++){
+      zombies.add(new Zombie(this));
+    }
   }
 
 
@@ -111,7 +140,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
               }
             }
             if (!overlaps) {
-              trees.add(new Tree(worldX, worldY, TileSize, this));
+              trees.add(new Tree(worldX, worldY, TileSize));
             }
           }
         }
@@ -130,16 +159,27 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
   }
 
   //draws game assets.
-  public void draw(Graphics2D g2){
+  public void draw(Graphics2D g2) {
     tileM.draw(g2);
 
+    // Draw buildings
+    for (Entity building : buildings) {
+      int screenX = building.worldX - player.worldX + player.screenX;
+      int screenY = building.worldY - player.worldY + player.screenY;
+      g2.drawImage(building.image, screenX, screenY, building.width, building.height, null);
+    }
     //draw trees (these are drawn before the player so that the player can appear on top if desired)    TREE UPDATE
     for (Tree tree : trees) {
       tree.draw(g2, this);
     }
+    for (Zombie zombies : zombies){
+      zombies.draw(g2);
+    }
 
     player.draw(g2);
-    zombies.draw(g2);
+    
+    ui.draw(g2);
+    g2.dispose();
   }
 
   //central collision checking method.
@@ -166,17 +206,27 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
 
   public void update(){
     player.update();
-    zombies.update();
+    for(Zombie zombies : zombies){
+      zombies.update();;
+    }
     tileM.update();
+
+    //build update --> building with F and R key
+    if(keyH.buildFloor || keyH.buildWall) {
+      buildH.tryBuild();
+      //reset flags after handling
+      keyH.buildFloor = false;
+      keyH.buildWall = false;
+    }
+
+    // Tree chopping
+    if(keyH.chopTree) {
+      tryChopTree();
+      keyH.chopTree = false;
+    }
 
     //perform collision checks after moving objects.
     checkCollision();
-
-    //trigger building functionality if the key was pressed.
-    if (keyH.enterPressed) {
-      buildH.build();
-      keyH.enterPressed = false;
-    }
   }
 
   public void run(){

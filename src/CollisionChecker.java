@@ -1,16 +1,25 @@
 
+/*
+Utility class to detect collisions between entities and map tiles.
+Provides methods to check entity-to-entity bounding-box collisions
+and to determine if movement into an adjacent tile is blocked.
+ */
+
 
 public class CollisionChecker {
 
-
     GamePanel gp;
+
     public CollisionChecker(GamePanel gp){
         this.gp = gp;
     }
-    //xhecks collision between two entities using their current bounds
+
+    //checks collision between two entities using their current bounds
     public boolean checkCollision(Entity a, Entity b) {
+
         return a.getBounds().intersects(b.getBounds());
     }
+
     //checks if the tile entity is moving to has collision or not
     public void checkTile(Entity entity){
         //get the four coords of the corners of the hitbox
@@ -25,7 +34,7 @@ public class CollisionChecker {
         int entityTopMapY = entityTopWorldY/gp.TileSize;
         int entityBottomMapY = entityBottomWorldY/gp.TileSize;
 
-        //te two tiles entity is walking into
+        //the two tiles entity is walking into
         int tileNum1, tileNum2;
 
         //check if the tiles have collision, if they do set collisionOn to be true so player stops
@@ -38,7 +47,7 @@ public class CollisionChecker {
             }
         }
         if(entity.direction.equals("down")){
-            entityBottomMapY = (entityBottomWorldY - entity.speed)/gp.TileSize;
+            entityBottomMapY = (entityBottomWorldY + entity.speed)/gp.TileSize;
             tileNum1 = gp.tileM.mapTileNum[entityBottomMapY][entityLeftMapX];
             tileNum2 = gp.tileM.mapTileNum[entityBottomMapY][entityRightMapX];
             if(gp.tileM.tile[tileNum1].collision||gp.tileM.tile[tileNum2].collision){
@@ -54,11 +63,53 @@ public class CollisionChecker {
             }
         }
         if(entity.direction.equals("right")){
-            entityRightMapX = (entityRightWorldX - entity.speed)/gp.TileSize;
+            entityRightMapX = (entityRightWorldX + entity.speed)/gp.TileSize;
             tileNum1 = gp.tileM.mapTileNum[entityTopMapY][entityRightMapX];
             tileNum2 = gp.tileM.mapTileNum[entityBottomMapY][entityRightMapX];
             if(gp.tileM.tile[tileNum1].collision||gp.tileM.tile[tileNum2].collision){
                 entity.collisionOn=true;
+            }
+        }
+
+        //NEWWWWW: Check building collisions (walls)
+        checkBuildingCollision(entity);
+    }
+
+    //NEW METHOD Check collision with buildings (especially walls)
+    public void checkBuildingCollision(Entity entity) {
+        //calculate where the entity will be after moving
+        int futureX = entity.worldX;
+        int futureY = entity.worldY;
+
+        switch(entity.direction) {
+            case "up": futureY -= entity.speed; break;
+            case "down": futureY += entity.speed; break;
+            case "left": futureX -= entity.speed; break;
+            case "right": futureX += entity.speed; break;
+        }
+
+        //create a rectangle representing the entity future position
+        java.awt.Rectangle futureHitBox = new java.awt.Rectangle(
+                futureX + entity.hitBox.x,
+                futureY + entity.hitBox.y,
+                entity.hitBox.width,
+                entity.hitBox.height
+        );
+
+        //check collision with all buildings
+        for(Entity building : gp.buildings) {
+            if(building.name.equals("wall")) { //only walls block movement
+                java.awt.Rectangle buildingBounds = new java.awt.Rectangle(
+                        building.worldX,
+                        building.worldY,
+                        gp.TileSize,
+                        gp.TileSize
+                );
+
+                if(futureHitBox.intersects(buildingBounds)) {
+                    entity.collisionOn = true;
+                    break;
+                }
             }
         }
     }

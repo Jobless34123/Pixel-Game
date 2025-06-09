@@ -1,20 +1,23 @@
+
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.util.Random;
 
+
+
 public class Zombie extends Entity {
 
-    
+    GamePanel gp;
     public int screenX;
     public int screenY;
     public int movementX;
     public int movementY;
+    public int actionCounter=0;
     public boolean onPath;
 
     public Zombie(GamePanel gp){
-        super(gp);
-
+        this.gp=gp;
         
         screenX = (gp.GAME_WIDTH / 2) - (gp.TileSize / 2);
         screenY = (gp.GAME_HEIGHT / 2) - (gp.TileSize / 2);
@@ -31,8 +34,8 @@ public class Zombie extends Entity {
         hitBox.width=12*gp.scale;
         hitBox.height=14*gp.scale;
 
-        worldX=20*gp.TileSize;
-        worldY=20*gp.TileSize;
+        worldX=(int)(Math.random()*50)*gp.TileSize;
+        worldY=(int)(Math.random()*50)*gp.TileSize;
 
         //setValues();
         getZombieImage();
@@ -103,7 +106,7 @@ public class Zombie extends Entity {
         int startX = (worldX+hitBox.x)/gp.TileSize; 
         int startY = (worldY+hitBox.y)/gp.TileSize;
 
-        gp.pathFinder.setNodes(startX, startY, goalWorldX, goalWorldY, this);
+        gp.pathFinder.setNodes(startX, startY, goalWorldX, goalWorldY);
 
         if(gp.pathFinder.search()){
 
@@ -170,7 +173,7 @@ public class Zombie extends Entity {
             int nextWorldX = gp.pathFinder.pathList.get(0).col;
             int nextWorldY = gp.pathFinder.pathList.get(0).row;
             if(nextWorldX==goalWorldX && nextWorldY ==goalWorldY ){
-                onPath=false;
+                //onPath=false;
             }
         }
     }

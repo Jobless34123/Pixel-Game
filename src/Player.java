@@ -6,8 +6,11 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 
+
+
 public class Player extends Entity {
 
+    GamePanel gp;
     KeyHandler keyH;
 
     // where the player is drawn
@@ -17,8 +20,25 @@ public class Player extends Entity {
     public int playerX;
     public int playerY;
 
+    //WOOD WOOD WOOD WOOD WOOD WOOD WOOD WOOD WOOD WOOD WOOD WOOD
+    public int wood = 0;
+
+    public void addWood(int amount) {
+        wood += amount;
+    }
+
+    public boolean spendWood(int amount) {
+        if(wood >= amount) {
+            wood -= amount;
+            return true;
+        }
+        return false;
+    }
+
+
+
     public Player(GamePanel gp, KeyHandler keyH){
-        super(gp);
+        this.gp = gp;
         this.keyH = keyH;
 
         //calculate screenX/screenY so player appears centered
@@ -53,6 +73,11 @@ public class Player extends Entity {
         playerY=worldY/gp.TileSize;
         if(keyH.upPressed||keyH.downPressed||keyH.leftPressed||keyH.rightPressed){
             spriteCounter++;
+
+            //check tile collision
+            collisionOn=false;
+            gp.collisionChecker.checkTile(this);;
+
             if(keyH.upPressed){
                 direction = "up";
             }
@@ -65,25 +90,16 @@ public class Player extends Entity {
             if(keyH.rightPressed){
                 direction = "right";
             }
-            //check tile collision
-            collisionOn=false;
-            gp.collisionChecker.checkTile(this);
-            
 
             // if collision false, player moves
 
             if(!collisionOn){
-                //if walking diaginal, lower speed
-                if((keyH.upPressed&&keyH.leftPressed)^(keyH.upPressed&&keyH.rightPressed)^(keyH.downPressed&&keyH.leftPressed)^(keyH.downPressed&&keyH.rightPressed)){
-                    speed=3;
-                }else{
-                    speed=4;
-                }
-                
                 if(keyH.upPressed){
+                    direction = "up";
                     worldY-=speed;
                 }
                 if(keyH.downPressed){
+                    direction = "down";
                     worldY+=speed;
                 }
                 if(keyH.leftPressed){
@@ -96,7 +112,7 @@ public class Player extends Entity {
                 }
             }
             //to cycle between different sprites
-            if(spriteCounter>24){
+            if(spriteCounter>10){
                 if(spriteNum==1){
                     spriteNum++;
                 }else if(spriteNum==2){
@@ -207,7 +223,7 @@ public class Player extends Entity {
         g2.setColor(new Color(255, 0, 0, 100));
         g2.drawRect(screenX, screenY, gp.TileSize, gp.TileSize);
         //hitbox
-        g2.setColor(new Color(255, 0, 0, 100));
+        g2.setColor(new Color(0, 115, 255, 100));
         g2.fillRect(screenX+hitBox.x, screenY+hitBox.y, hitBox.width, hitBox.height);
     }
 }

@@ -1,3 +1,4 @@
+
 import java.util.ArrayList;
 
 public class PathFinder {
@@ -48,7 +49,7 @@ public class PathFinder {
         goalreached=false;
         step=0;
     }
-    public void setNodes(int startCol, int startRow, int goalCol, int goalRow, Entity entity){
+    public void setNodes(int startCol, int startRow, int goalCol, int goalRow){
 
         resetNodes();
         startNode=nodes[startCol][startRow];
@@ -107,11 +108,11 @@ public class PathFinder {
                 openNode(nodes[col][row-1]);
             }
             //check down node
-            if(row+1>=0){
+            if(row+1>=0&&row+1<gp.MAP_WIDTH){
                 openNode(nodes[col][row+1]);
             }
             //check right node
-            if(col+1>=0){
+            if(col+1>=0&&col+1<gp.MAP_HEIGHT){
                 openNode(nodes[col+1][row]);
             }
             //check left node
@@ -166,3 +167,4 @@ public class PathFinder {
         }
     }
 }
+

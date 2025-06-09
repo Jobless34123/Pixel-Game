@@ -1,5 +1,4 @@
 
-
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
@@ -8,6 +7,7 @@ public class KeyHandler implements KeyListener{
 
     public boolean upPressed, downPressed, rightPressed, leftPressed, enterPressed;
     public String direction;
+    public boolean buildFloor, buildWall, chopTree;
 
     @Override
     public void keyTyped(KeyEvent e) {
@@ -33,10 +33,10 @@ public class KeyHandler implements KeyListener{
             rightPressed=true;
             direction="right";
         }
-        if (code == KeyEvent.VK_ENTER){
-            enterPressed=true;
-        }
-        
+        if (code == KeyEvent.VK_F) buildFloor = true;
+        if (code == KeyEvent.VK_R) buildWall = true;
+        if (code == KeyEvent.VK_SPACE) chopTree = true;
+
     }
 
     @Override
@@ -58,6 +58,9 @@ public class KeyHandler implements KeyListener{
         if (code == KeyEvent.VK_ENTER){
             enterPressed=false;
         }
+        if (code == KeyEvent.VK_F) buildFloor = false;
+        if (code == KeyEvent.VK_R) buildWall = false;
+        if (code == KeyEvent.VK_SPACE) chopTree = false;
     }
-    
+
 }
