@@ -1,6 +1,4 @@
 
-
-
 import java.awt.Point;
 
 public class BuildHandler {
@@ -41,37 +39,45 @@ public class BuildHandler {
         }
 
         // Check if space is occupied by another building
-        for(Entity entity : gp.buildings) {
+        for(Wall entity : gp.walls) {
             int entityX = entity.worldX / gp.TileSize;
             int entityY = entity.worldY / gp.TileSize;
             if(entityX == targetX && entityY == targetY) {
                 return;
             }
         }
+        for(Floor entity : gp.floors) {
+            int entityX = entity.worldX / gp.TileSize;
+            int entityY = entity.worldY / gp.TileSize;
+            if(entityX == targetX && entityY == targetY) {
+                return;
+            }
+        }
+        
 
         // Handle building types
         if(keyH.buildFloor) {
             // Can only build floors on water
             if(gp.tileM.mapTileNum[targetY][targetX] == 0 && player.spendWood(1)) {
-                gp.buildings.add(new Floor(gp, targetX * gp.TileSize, targetY * gp.TileSize));
+                gp.floors.add(new Floor(gp, targetX * gp.TileSize, targetY * gp.TileSize));
                 gp.tileM.mapTileNum[targetY][targetX]=1;
             }
         }
         else if(keyH.buildWall) {
             // Can build walls on land or existing floors
-            if((gp.tileM.mapTileNum[targetY][targetX] == 1 || hasFloorAt(targetX, targetY)) &&
+            if((!gp.tileM.tile[gp.tileM.mapTileNum[targetY][targetX]].collision || hasFloorAt(targetX, targetY)) &&
                     player.spendWood(2)) {
-                gp.buildings.add(new Wall(gp, targetX * gp.TileSize, targetY * gp.TileSize));
-                gp.tileM.mapTileNum[targetY][targetX]=0;
+                gp.walls.add(new Wall(gp, targetX * gp.TileSize, targetY * gp.TileSize));
+                gp.tileM.mapTileNum[targetY][targetX]=10;
             }
         }
     }
 
     private boolean hasFloorAt(int x, int y) {
-        for(Entity entity : gp.buildings) {
+        for(Floor entity : gp.floors) {
             int entityX = entity.worldX / gp.TileSize;
             int entityY = entity.worldY / gp.TileSize;
-            if(entityX == x && entityY == y && entity.name.equals("floor")) {
+            if(entityX == x && entityY == y) {
                 return true;
             }
         }

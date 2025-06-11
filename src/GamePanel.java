@@ -1,3 +1,5 @@
+
+
 /*
 Core game loop and rendering panel for the 2D tile-based game.
 Manages drawing, updates, input handling, collision enforcement,
@@ -22,7 +24,9 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
   public final int GAME_WIDTH = TileSize * maxScreenWidth;
   public final int GAME_HEIGHT = TileSize * maxScreenHeight;
   public PathFinder pathFinder = new PathFinder(this);
-  public ArrayList<Entity> buildings;
+  public ArrayList<Wall> walls;
+  public ArrayList<Floor> floors;
+
 
   
   public UI ui = new UI(this);
@@ -42,6 +46,8 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
   public TileMaker tileM = new TileMaker(this, keyH);
   public ArrayList<Tree> trees;
   public ArrayList<Zombie> zombies;
+  public final int totalZombies=10;
+  public int aliveZombies=totalZombies;
 
 
   //dedicated collision checker instance :))
@@ -66,7 +72,8 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
     generateZombies();
 
     //NEW updatee: Initialize buildings list before creating player/buildHandler
-    buildings = new ArrayList<>();
+    walls = new ArrayList<>();
+    floors = new ArrayList<>();
 
     player = new Player(this, keyH);
     buildH = new BuildHandler(this, keyH);
@@ -101,7 +108,7 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
 
   public void generateZombies(){
     zombies = new ArrayList<>();
-    for(int x=0;x<5;x++){
+    for(int x=0;x<totalZombies;x++){
       zombies.add(new Zombie(this));
     }
   }
@@ -163,7 +170,12 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
     tileM.draw(g2);
 
     // Draw buildings
-    for (Entity building : buildings) {
+    for (Wall building : walls) {
+      int screenX = building.worldX - player.worldX + player.screenX;
+      int screenY = building.worldY - player.worldY + player.screenY;
+      g2.drawImage(building.image, screenX, screenY, building.width, building.height, null);
+    }
+    for (Floor building : floors) {
       int screenX = building.worldX - player.worldX + player.screenX;
       int screenY = building.worldY - player.worldY + player.screenY;
       g2.drawImage(building.image, screenX, screenY, building.width, building.height, null);
@@ -172,11 +184,14 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
     for (Tree tree : trees) {
       tree.draw(g2, this);
     }
-    for (Zombie zombies : zombies){
-      zombies.draw(g2);
+    for (Zombie zombie : zombies){
+      if(zombie.alive){
+        zombie.draw(g2);
+      }
     }
 
     player.draw(g2);
+      
     
     ui.draw(g2);
     g2.dispose();
@@ -206,8 +221,17 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
 
   public void update(){
     player.update();
+    aliveZombies=totalZombies;
     for(Zombie zombies : zombies){
-      zombies.update();;
+      zombies.update();
+      if(!zombies.alive){
+        aliveZombies-=1;
+      }
+      if(collisionChecker.checkCollision(zombies,player)&&zombies.alive){
+        player.health-=1;
+        ui.shrinkBar();
+        //zombies.alive=false;
+      }      
     }
     tileM.update();
 

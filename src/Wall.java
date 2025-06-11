@@ -1,23 +1,28 @@
 
-
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
 public class Wall extends Entity {
-
+    public int hp;
+    GamePanel gp;
     public Wall(GamePanel gp, int worldX, int worldY) {
+        this.gp = gp;
         this.worldX = worldX;
         this.worldY = worldY;
         this.width = gp.TileSize;
         this.height = gp.TileSize;
         name = "wall";
         collision = true; //walls should block movement
+        hp=100;
 
         //set collision bounds
         setBounds(worldX, worldY, width, height);
 
         //create a simple colored rectangle as placeholder image
         createWallImage(gp.TileSize);
+        this.hitBox.width=gp.TileSize+2;
+        this.hitBox.height=gp.TileSize;
+        this.hitBox.translate(1, 0);
     }
 
     private void createWallImage(int tileSize) {
@@ -55,9 +60,24 @@ public class Wall extends Entity {
         g2.setStroke(new BasicStroke(2));
         g2.drawRect(1, 1, tileSize-2, tileSize-2);
 
+        int screenX = worldX - gp.player.worldX + gp.player.screenX ;
+        int screenY = worldY - gp.player.worldY + gp.player.screenY ;
+
+        
+        g2.setColor(new Color(0, 115, 255, 255));
+        g2.fillRect(screenX+hitBox.x, screenY+hitBox.y, hitBox.width, hitBox.height);
+
         g2.dispose();
 
         //bufferedImage to the Image field
         this.image = wallImage;
+    }
+    public boolean chop() {
+        hp -= 1; // Damage per chop
+        if(hp <= 0) {
+            gp.tileM.mapTileNum[worldY/gp.TileSize][worldX/gp.TileSize]=1;
+            return true;
+        }
+        return false;
     }
 }

@@ -2,8 +2,10 @@
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
+import java.awt.image.BufferedImage;
 import java.util.Random;
 
+import javax.imageio.ImageIO;
 
 
 public class Zombie extends Entity {
@@ -15,8 +17,10 @@ public class Zombie extends Entity {
     public int movementY;
     public int actionCounter=0;
     public boolean onPath;
+    public boolean alive=true;
 
     public Zombie(GamePanel gp){
+        super();
         this.gp=gp;
         
         screenX = (gp.GAME_WIDTH / 2) - (gp.TileSize / 2);
@@ -24,9 +28,10 @@ public class Zombie extends Entity {
 
         name="zombie";
         speed=3;
-        maxHealth=10;
-        health=maxHealth;
+        maxHealth = 10;
+        healthS = maxHealth;
         onPath=true;
+        alive=true;
         //Hit box change for collision
         hitBox = new Rectangle();     
         hitBox.x=10*gp.scale;
@@ -40,9 +45,18 @@ public class Zombie extends Entity {
         //setValues();
         getZombieImage();
         direction = "down";
+        spriteCounter = 0;
+        spriteNum = 1;
     }
+
     public void getZombieImage(){
         //add images later
+        try {
+            
+            frontS = ImageIO.read(getClass().getResourceAsStream("/resources/zombies/Zombie_Front_Standing.png"));
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
     }
     public void setAction(){
         if(!onPath){
@@ -72,8 +86,17 @@ public class Zombie extends Entity {
     }
     public void update(){
         setAction();
-        gp.collisionChecker.checkTile(this);
+            for(int i=0;i<gp.walls.size();i++){
+                if(gp.collisionChecker.checkCollision(this, gp.walls.get(i))){
+                    if(gp.walls.get(i).chop()){
+                        gp.walls.remove(gp.walls.get(i));
+                        System.out.println("chop");
+                    }
+                }
+                
+            }
         collisionOn=false;
+        gp.collisionChecker.checkTile(this);
         if(!collisionOn){
         switch (direction) {
             case "up":
@@ -93,13 +116,31 @@ public class Zombie extends Entity {
                 break;
         }
         }
-            //check tile collision
+
+        spriteCounter++;
+        applyVelocity();
+        
     }
+
+    @Override
+    protected void onDeath() {
+        alive = false;
+    }
+
     public void draw(Graphics g2){
-        g2.setColor(new Color(255, 0, 0, 255));
+        BufferedImage image = (BufferedImage) frontS;
+
         int screenX = worldX - gp.player.worldX + gp.player.screenX + movementX;
         int screenY = worldY - gp.player.worldY + gp.player.screenY + movementY;
-        g2.fillRect(screenX, screenY, hitBox.width, hitBox.height);
+
+        g2.drawImage(image, screenX, screenY, gp.TileSize, gp.TileSize, null);
+
+        //for visual debugging this draws the collision boundary (a semi-transparent red rectangle). jk its aimbot
+        g2.setColor(new Color(255, 0, 0, 100));
+        g2.drawRect(screenX, screenY, gp.TileSize, gp.TileSize);
+        //hitbox
+        g2.setColor(new Color(0, 115, 255, 100));
+        g2.fillRect(screenX+hitBox.x, screenY+hitBox.y, hitBox.width, hitBox.height);
     }   
     public void searchPath(int goalWorldX, int goalWorldY){
 

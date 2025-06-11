@@ -8,6 +8,7 @@ public class KeyHandler implements KeyListener{
     public boolean upPressed, downPressed, rightPressed, leftPressed, enterPressed;
     public String direction;
     public boolean buildFloor, buildWall, chopTree;
+    public boolean attackPressed = false;
 
     @Override
     public void keyTyped(KeyEvent e) {
@@ -17,6 +18,9 @@ public class KeyHandler implements KeyListener{
     public void keyPressed(KeyEvent e) {
         int code = e.getKeyCode();
 
+        if (code == KeyEvent.VK_J) {
+            attackPressed = true;
+        }
         if (code == KeyEvent.VK_W){
             upPressed=true;
             direction="up";
@@ -43,6 +47,9 @@ public class KeyHandler implements KeyListener{
     public void keyReleased(KeyEvent e) {
         int code = e.getKeyCode();
 
+        if (code == KeyEvent.VK_J) {
+            attackPressed = false;
+        }
         if (code == KeyEvent.VK_W){
             upPressed=false;
         }

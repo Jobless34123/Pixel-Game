@@ -1,5 +1,4 @@
 
-
 // description: This is a java class for the player.
 
 import java.awt.*;
@@ -7,8 +6,9 @@ import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 
 
-
 public class Player extends Entity {
+    private Weapon sword;             // ← hold your sword
+    private int attackCooldown = 0;   // ← cooldown timer
 
     GamePanel gp;
     KeyHandler keyH;
@@ -38,6 +38,7 @@ public class Player extends Entity {
 
 
     public Player(GamePanel gp, KeyHandler keyH){
+        super();
         this.gp = gp;
         this.keyH = keyH;
 
@@ -57,6 +58,8 @@ public class Player extends Entity {
 
         //initialize collision bounds (based on starting position and size). might need reworking
         setBounds(worldX, worldY, gp.TileSize, gp.TileSize);
+        sword = new Weapon("Basic Sword", 3, gp.TileSize, 12);
+
     }
 
     public void setValues(){
@@ -64,6 +67,8 @@ public class Player extends Entity {
         worldX = gp.TileSize * 24;
         worldY = gp.TileSize * 24;
         speed = 4;
+        health=3;
+        maxHealth=3;
     }
 
     public void update(){
@@ -76,7 +81,7 @@ public class Player extends Entity {
 
             //check tile collision
             collisionOn=false;
-            gp.collisionChecker.checkTile(this);;
+            gp.collisionChecker.checkTile(this);
 
             if(keyH.upPressed){
                 direction = "up";
@@ -124,9 +129,15 @@ public class Player extends Entity {
                 }
                 spriteCounter=0;
             }
+
+            // Handle attack
+            if (attackCooldown > 0) attackCooldown--;
+            if (keyH.attackPressed && attackCooldown == 0) {
+                attackCooldown = 20;
+                doAttack();
+                applyVelocity();
+            }
         }
-
-
 
         //sprite (animation) update
         if(keyH.upPressed || keyH.downPressed || keyH.leftPressed || keyH.rightPressed){
@@ -136,9 +147,44 @@ public class Player extends Entity {
                 spriteCounter = 0;
             }
         }
+        // Apply any knockback
+        applyVelocity();
         //update the inherited Rectangle bounds after moving.
         setBounds(worldX, worldY, gp.TileSize, gp.TileSize);
     }
+
+    private void doAttack() {
+        // 1) Build the attack box *in world coordinates*:
+        Rectangle atk = new Rectangle(
+                worldX + hitBox.x,
+                worldY + hitBox.y,
+                hitBox.width,
+                hitBox.height
+        );
+
+        // 2) Shift it one sword‐length in the facing direction:
+        switch (direction) {
+            case "up":    atk.y -= sword.range;    break;
+            case "down":  atk.y += sword.range;    break;
+            case "left":  atk.x -= sword.range;    break;
+            case "right": atk.x += sword.range;    break;
+        }
+
+        // 3) Damage and knock back any zombies it overlaps:
+        for (Zombie z : gp.zombies) {
+            if (z.alive && atk.intersects(
+                    new Rectangle(z.worldX+z.hitBox.x,
+                            z.worldY+z.hitBox.y,
+                            z.hitBox.width,
+                            z.hitBox.height
+                    )
+            )) {
+                z.takeDamage(sword.damage);
+                z.applyKnockback(sword.knockback, direction);
+            }
+        }
+    }
+
 
     public void getPlayerImage(){
         try{
@@ -159,71 +205,58 @@ public class Player extends Entity {
         }
     }
 
-    public void draw(Graphics g2){
-        BufferedImage image = null;
-        if(direction.equals("up")){
-            if(spriteNum==1){
-                image = (BufferedImage) backS;
-            }
-            if(spriteNum==2){
-                image = (BufferedImage) back1;
-            }
-            if(spriteNum==3){
-                image = (BufferedImage) backS;
-            }
-            if(spriteNum==4){
-                image = (BufferedImage) back2;
-            }
-        }
-        if(direction.equals("down")){
-            if(spriteNum==1){
-                image = (BufferedImage) frontS;
-            }
-            if(spriteNum==2){
-                image = (BufferedImage) front1;
-            }
-            if(spriteNum==3){
-                image = (BufferedImage) frontS;
-            }
-            if(spriteNum==4){
-                image = (BufferedImage) front2;
-            }
-        }
-        if(direction.equals("left")){
-            if(spriteNum==1){
-                image = (BufferedImage) leftS;
-            }
-            if(spriteNum==2){
-                image = (BufferedImage) left1;
-            }
-            if(spriteNum==3){
-                image = (BufferedImage) leftS;
-            }
-            if(spriteNum==4){
-                image = (BufferedImage) left2;
-            }
-        }
-        if(direction.equals("right")){
-            if(spriteNum==1){
-                image = (BufferedImage) rightS;
-            }
-            if(spriteNum==2){
-                image = (BufferedImage) right1;
-            }
-            if(spriteNum==3){
-                image = (BufferedImage) rightS;
-            }
-            if(spriteNum==4){
-                image = (BufferedImage) right2;
-            }
-        }
-        g2.drawImage(image, screenX, screenY, gp.TileSize, gp.TileSize, null);
 
-        //for visual debugging this draws the collision boundary (a semi-transparent red rectangle). jk its aimbot
-        g2.setColor(new Color(255, 0, 0, 100));
-        g2.drawRect(screenX, screenY, gp.TileSize, gp.TileSize);
-        //hitbox
+    public void draw(Graphics g2) {
+        BufferedImage toDraw = null;
+
+        // 1) Decide which sprite to draw:
+        if (attackCooldown > 0) {
+            // Sword is swinging – pick swing frame
+            int frame = (2 - ((attackCooldown / 7) % 3));  // 0,1,2 cycling
+            toDraw = sword.swingFrames[frame];
+        } else {
+            // Normal player sprite
+            switch (direction) {
+                case "up":
+                    if (spriteNum == 1) toDraw = (BufferedImage) backS;
+                    if (spriteNum == 2) toDraw = (BufferedImage) back1;
+                    if (spriteNum == 3) toDraw = (BufferedImage) backS;
+                    if (spriteNum == 4) toDraw = (BufferedImage) back2;
+                    break;
+                case "down":
+                    if (spriteNum == 1) toDraw = (BufferedImage) frontS;
+                    if (spriteNum == 2) toDraw = (BufferedImage) front1;
+                    if (spriteNum == 3) toDraw = (BufferedImage) frontS;
+                    if (spriteNum == 4) toDraw = (BufferedImage) front2;
+                    break;
+                case "left":
+                    if (spriteNum == 1) toDraw = (BufferedImage) leftS;
+                    if (spriteNum == 2) toDraw = (BufferedImage) left1;
+                    if (spriteNum == 3) toDraw = (BufferedImage) leftS;
+                    if (spriteNum == 4) toDraw = (BufferedImage) left2;
+                    break;
+                case "right":
+                    if (spriteNum == 1) toDraw = (BufferedImage) rightS;
+                    if (spriteNum == 2) toDraw = (BufferedImage) right1;
+                    if (spriteNum == 3) toDraw = (BufferedImage) rightS;
+                    if (spriteNum == 4) toDraw = (BufferedImage) right2;
+                    break;
+            }
+        }
+
+        // 2) Draw the selected sprite at the player’s screen position:
+        if (toDraw != null) {
+            g2.drawImage(toDraw, screenX, screenY, gp.TileSize, gp.TileSize, null);
+        } else {
+            // fallback: draw a placeholder rectangle if something went wrong
+            g2.setColor(Color.MAGENTA);
+            g2.fillRect(screenX, screenY, gp.TileSize, gp.TileSize);
+        }
+
+        // 3) Debug hitbox (optional):
         g2.setColor(new Color(0, 115, 255, 100));
-        g2.fillRect(screenX+hitBox.x, screenY+hitBox.y, hitBox.width, hitBox.height);
+        g2.fillRect(screenX + hitBox.x, screenY + hitBox.y, hitBox.width, hitBox.height);
+
+        // 4) Draw UI elements (health bar, wood count, etc.) after this
     }
 }

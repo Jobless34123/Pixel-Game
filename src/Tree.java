@@ -1,10 +1,10 @@
-// NO package declaration here
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.util.Random;
 
-public class Tree extends Entity { // Entity is now visible
+public class Tree extends Entity {
     public int hp;
     public int woodYield;
     public BufferedImage image;

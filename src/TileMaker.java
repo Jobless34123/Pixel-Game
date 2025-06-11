@@ -1,20 +1,27 @@
+
 import java.awt.Graphics2D;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import javax.imageio.ImageIO;
 
+/**
+ * handles loading and rendering of tile-based maps
+ * manages tile textures and collision data
+ */
 public class TileMaker {
-    GamePanel gp; // GamePanel is now visible
-    KeyHandler keyH; // KeyHandler is now visible
-    public Tile[] tile; // Tile is now visible
+    GamePanel gp;
+    KeyHandler keyH;
+    public Tile[] tile;
     public int[][] mapTileNum;
+    final public int[][] mapTileNumOriginal;
 
     public TileMaker(GamePanel gp, KeyHandler keyH) {
         this.gp = gp;
         this.keyH = keyH;
         tile = new Tile[20];
         mapTileNum = new int[gp.MAP_HEIGHT][gp.MAP_WIDTH];
+        mapTileNumOriginal = new int[gp.MAP_HEIGHT][gp.MAP_WIDTH];
         getTileImage();
         map();
     }
@@ -45,6 +52,7 @@ public class TileMaker {
             tile[9].image = ImageIO.read(getClass().getResourceAsStream("/resources/tiles/Tile_Sand_Bottom_Right.png"));//9
             tile[10] = new Tile();
             tile[10].image = ImageIO.read(getClass().getResourceAsStream("/resources/building/Wall_Middle.png"));//10
+            tile[10].collision=false;
             // ... continue with all your existing tile definitions ...
 
         } catch (Exception e) {
@@ -71,6 +79,7 @@ public class TileMaker {
                     String[] numbers = line.split(" ");
                     int num = Integer.parseInt(numbers[width]);
                     mapTileNum[height][width] = num;
+                    mapTileNumOriginal[height][width] = num;
                     width++;
                 }
                 if (width == gp.MAP_WIDTH) {

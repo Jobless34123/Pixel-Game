@@ -1,4 +1,5 @@
 
+
 /*
  Base class for objects in the game world (Building, MObs , NPCs, etc.).
  Should manages position, speed, directional state, animations, and collision bounds.
@@ -14,11 +15,15 @@ public class Entity extends Rectangle {
   public int speed;
   public Image image;
 
-  // NEWWWWWW Add these fields for buildings
+  //fields for buildings
   public String name;
   public boolean collision;
   public int health;
   public int maxHealth;
+
+  // NEWWWW fields for combat
+  public int healthS;
+  public int dx = 0, dy = 0;      // knockback velocity
 
   //animation
   public Image frontS, front1, front2, backS, back1, back2, rightS, right1, right2, leftS, left1, left2;
@@ -29,6 +34,38 @@ public class Entity extends Rectangle {
   public boolean collisionOn=false;
 
   public Entity() { }
+
+
+  public void takeDamage(int dmg) {
+    healthS -= dmg;
+    if (healthS <= 0) {
+      onDeath();
+    }
+  }
+
+  public void applyKnockback(int kb, String attackDir) {
+    switch (attackDir) {
+      case "up":    dy -= kb; break;
+      case "down":  dy += kb; break;
+      case "left":  dx -= kb; break;
+      case "right": dx += kb; break;
+    }
+  }
+  protected void onDeath() {
+    // default: nothing.  Player/Zombie override to remove themselves.
+  }
+  public void applyVelocity() {
+    if (dx != 0 || dy != 0) {
+      worldX += dx;
+      worldY += dy;
+      // dampen velocity
+      dx = (int)(dx * 0.8);
+      dy = (int)(dy * 0.8);
+
+      x = worldX;
+      y = worldY;
+    }
+  }
 
   //this method returns the collision bounds.
   // also change and mess with it for hit box
