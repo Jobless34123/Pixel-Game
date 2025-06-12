@@ -20,8 +20,9 @@ public class Entity extends Rectangle {
   public boolean collision;
   public int health;
   public int maxHealth;
+  public boolean alive;
 
-  // NEWWWW fields for combat
+  // fields for combat
   public int healthS;
   public int dx = 0, dy = 0;      // knockback velocity
 
@@ -44,6 +45,7 @@ public class Entity extends Rectangle {
   }
 
   public void applyKnockback(int kb, String attackDir) {
+    // remove onPath / knockbackTimer unless you need them
     switch (attackDir) {
       case "up":    dy -= kb; break;
       case "down":  dy += kb; break;
@@ -51,16 +53,17 @@ public class Entity extends Rectangle {
       case "right": dx += kb; break;
     }
   }
+  
   protected void onDeath() {
-    // default: nothing.  Player/Zombie override to remove themselves.
+        alive = false;
   }
   public void applyVelocity() {
     if (dx != 0 || dy != 0) {
       worldX += dx;
       worldY += dy;
       // dampen velocity
-      dx = (int)(dx * 0.8);
-      dy = (int)(dy * 0.8);
+      dx = (int)(dx * 0.95);
+      dy = (int)(dy * 0.95);
 
       x = worldX;
       y = worldY;

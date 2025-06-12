@@ -5,6 +5,7 @@ import java.awt.event.KeyListener;
 //Handles what pressed keys does
 public class KeyHandler implements KeyListener{
 
+    public boolean inventoryPressed = false;
     public boolean upPressed, downPressed, rightPressed, leftPressed, enterPressed;
     public String direction;
     public boolean buildFloor, buildWall, chopTree;
@@ -40,6 +41,7 @@ public class KeyHandler implements KeyListener{
         if (code == KeyEvent.VK_F) buildFloor = true;
         if (code == KeyEvent.VK_R) buildWall = true;
         if (code == KeyEvent.VK_SPACE) chopTree = true;
+        if (code == KeyEvent.VK_B)   inventoryPressed = true;
 
     }
 

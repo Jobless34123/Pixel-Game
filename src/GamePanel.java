@@ -15,6 +15,7 @@ import javax.swing.*;
 
 public class GamePanel extends JPanel implements Runnable, KeyListener {
 
+  public boolean inventoryOpen = false;
   //dimensions for the window (in pixels and tiles)
   final int originalTileSize = 32; // tile
   public final int scale = 3;
@@ -26,9 +27,8 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
   public PathFinder pathFinder = new PathFinder(this);
   public ArrayList<Wall> walls;
   public ArrayList<Floor> floors;
+  private final int ZOMBIE_SPAWN_INTERVAL = 60 * 120; // 60 FPS * 120 seconds = 2 minutes
 
-
-  
   public UI ui = new UI(this);
 
   public final int MAP_WIDTH = 50;  // map size in tiles
@@ -46,9 +46,13 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
   public TileMaker tileM = new TileMaker(this, keyH);
   public ArrayList<Tree> trees;
   public ArrayList<Zombie> zombies;
-  public final int totalZombies=10;
+  public int totalZombies=10;
   public int aliveZombies=totalZombies;
-
+  private int currentWave = 1;
+  private boolean waveInProgress = true;
+  private long nextWaveStartTime = 0;
+  private final int WAVE_DELAY_MS = 10000;
+  public int score = 0;
 
   //dedicated collision checker instance :))
   public CollisionChecker collisionChecker = new CollisionChecker(this);        //CHANGE:  this added in bracket
@@ -108,8 +112,10 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
 
   public void generateZombies(){
     zombies = new ArrayList<>();
-    for(int x=0;x<totalZombies;x++){
+    for(int i=0;i<totalZombies;i++){
       zombies.add(new Zombie(this));
+      //Generate zombies every 2 minutes
+
     }
   }
 
@@ -219,39 +225,64 @@ public class GamePanel extends JPanel implements Runnable, KeyListener {
 
   }
 
-  public void update(){
-    player.update();
-    aliveZombies=totalZombies;
-    for(Zombie zombies : zombies){
-      zombies.update();
-      if(!zombies.alive){
-        aliveZombies-=1;
-      }
-      if(collisionChecker.checkCollision(zombies,player)&&zombies.alive){
-        player.health-=1;
-        ui.shrinkBar();
-        //zombies.alive=false;
-      }      
+  public void update() {
+
+    if (keyH.inventoryPressed) {
+      inventoryOpen = !inventoryOpen;
+      keyH.inventoryPressed = false;
     }
+    player.update();
+
+    int newAliveZombies = 0;
+    for (Zombie zombie : zombies) {
+      zombie.update();
+
+      if (zombie.alive) {
+        newAliveZombies++;
+        if (collisionChecker.checkCollision(zombie, player)) {
+          if (zombie.canDamagePlayer()) {
+            player.loseHealth(1);
+            ui.shrinkBar();
+            zombie.recordDamageTime();
+
+            player.applyKnockback(25, zombie.direction);
+          }
+        }
+      }
+    }
+    aliveZombies = newAliveZombies;
+
+    if (waveInProgress && aliveZombies == 0) {
+      waveInProgress = false;
+      nextWaveStartTime = System.currentTimeMillis() + WAVE_DELAY_MS;
+    }
+
+    if (!waveInProgress && System.currentTimeMillis() >= nextWaveStartTime) {
+      currentWave++;
+      totalZombies += 2;
+      generateZombies();
+      waveInProgress = true;
+    }
+
     tileM.update();
 
-    //build update --> building with F and R key
-    if(keyH.buildFloor || keyH.buildWall) {
+    if (keyH.buildFloor || keyH.buildWall) {
       buildH.tryBuild();
-      //reset flags after handling
       keyH.buildFloor = false;
       keyH.buildWall = false;
     }
 
-    // Tree chopping
-    if(keyH.chopTree) {
+    if (keyH.chopTree) {
       tryChopTree();
       keyH.chopTree = false;
     }
 
-    //perform collision checks after moving objects.
+    aliveZombies = newAliveZombies;
     checkCollision();
   }
+
+
+
 
   public void run(){
     long lastTime = System.nanoTime();

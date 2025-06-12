@@ -17,7 +17,32 @@ public class Zombie extends Entity {
     public int movementY;
     public int actionCounter=0;
     public boolean onPath;
-    public boolean alive=true;
+
+    private long lastDamageTime = 0;
+
+    public void loseHealth(int dmg) {
+        this.healthS -= dmg;
+        if (this.healthS <= 0 && alive) {
+            onDeath();
+        }
+    }
+
+    public void takeDamage(int dmg) {
+        // If you have a base class takeDamage, you can call super.takeDamage(dmg),
+        // but here's a self-contained version:
+        this.healthS -= dmg;
+        if (this.healthS <= 0 && alive) {
+            onDeath();
+        }
+    }
+
+    public boolean canDamagePlayer() {
+        return System.currentTimeMillis() - lastDamageTime >= 800;
+    }
+
+    public void recordDamageTime() {
+        lastDamageTime = System.currentTimeMillis();
+    }
 
     public Zombie(GamePanel gp){
         super();
@@ -125,6 +150,9 @@ public class Zombie extends Entity {
     @Override
     protected void onDeath() {
         alive = false;
+        // Award score immediately on death:
+        gp.score += 2;
+        System.out.println("Zombie killed! Score is now " + gp.score);
     }
 
     public void draw(Graphics g2){
