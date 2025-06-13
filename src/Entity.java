@@ -10,8 +10,8 @@ import java.awt.*;
 
 //initialization
 public class Entity extends Rectangle {
-  public int worldX;
-  public int worldY;
+  public int worldX=0;
+  public int worldY=0;
   public int speed;
   public Image image;
 
@@ -22,7 +22,7 @@ public class Entity extends Rectangle {
   public int maxHealth;
   public boolean alive;
 
-  // fields for combat
+  // NEWWWW fields for combat
   public int healthS;
   public int dx = 0, dy = 0;      // knockback velocity
 
@@ -37,15 +37,16 @@ public class Entity extends Rectangle {
   public Entity() { }
 
 
-  public void takeDamage(int dmg) {
+  public boolean takeDamage(int dmg) {
     healthS -= dmg;
     if (healthS <= 0) {
       onDeath();
+      return false;
     }
+    return true;
   }
 
   public void applyKnockback(int kb, String attackDir) {
-    // remove onPath / knockbackTimer unless you need them
     switch (attackDir) {
       case "up":    dy -= kb; break;
       case "down":  dy += kb; break;
@@ -55,15 +56,15 @@ public class Entity extends Rectangle {
   }
   
   protected void onDeath() {
-        alive = false;
+    alive = false;
   }
   public void applyVelocity() {
     if (dx != 0 || dy != 0) {
       worldX += dx;
       worldY += dy;
       // dampen velocity
-      dx = (int)(dx * 0.95);
-      dy = (int)(dy * 0.95);
+      dx = (int)(dx * 0.8);
+      dy = (int)(dy * 0.8);
 
       x = worldX;
       y = worldY;

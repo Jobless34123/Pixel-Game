@@ -24,6 +24,8 @@ public class Player extends Entity {
     public int wood = 0;
 
     Rectangle atk;
+    Rectangle atk2;
+    Color blastColor;
 
     public void addWood(int amount) {
         wood += amount;
@@ -37,23 +39,6 @@ public class Player extends Entity {
         return false;
     }
 
-    public void die() {
-        System.out.println("Player has died. Game Over.");
-        javax.swing.SwingUtilities.invokeLater(() -> {
-            javax.swing.JFrame topFrame = (javax.swing.JFrame) javax.swing.SwingUtilities.getWindowAncestor(gp);
-            if (topFrame != null) {
-                javax.swing.JOptionPane.showMessageDialog(topFrame, "Game Over! Final Score: " + gp.score);
-            }
-            System.exit(0); // Exit the game
-        });
-    }
-
-    public void loseHealth(int dmg) {
-        this.health -= dmg;
-        if (this.health <= 0) {
-            this.die(); // Create this method to handle death animation/game over if you want
-        }
-    }
 
 
     public Player(GamePanel gp, KeyHandler keyH){
@@ -77,35 +62,37 @@ public class Player extends Entity {
 
         //initialize collision bounds (based on starting position and size). might need reworking
         setBounds(worldX, worldY, gp.TileSize, gp.TileSize);
-        sword = new Weapon("Basic Sword", 5, gp.TileSize*2, 10);
+        sword = new Weapon("Basic Sword", 5, gp.TileSize*2, 24);
 
         atk = new Rectangle(
         worldX + hitBox.x,
         worldY + hitBox.y,
         hitBox.width,
         hitBox.height
-);
+        );
+        
+        atk2 = new Rectangle(
+        worldX + hitBox.x,
+        worldY + hitBox.y,
+        hitBox.width,
+        hitBox.height
+        );
+        atk2.setLocation(gp.GAME_WIDTH/2,gp.GAME_HEIGHT/2);
+        blastColor = new Color(255,255,255,0);
 
     }
 
     public void setValues(){
         //starting position on the map (in pixels)
-        worldX = gp.TileSize * 24;
-        worldY = gp.TileSize * 24;
-        speed = 4;
-        health=3;
-        maxHealth=3;
+        worldX = gp.TileSize * 30;
+        worldY = gp.TileSize * 41;
+        speed = 5;
+        health=5;
+        maxHealth=5;
     }
 
     public void update(){
 
-        worldX += dx;
-        worldY += dy;
-
-        setBounds(worldX, worldY, gp.TileSize, gp.TileSize);
-
-        dx *= 0.5;
-        dy *= 0.5;
         //movement
         playerX=worldX/gp.TileSize;
         playerY=worldY/gp.TileSize;
@@ -167,11 +154,16 @@ public class Player extends Entity {
         }
         // Handle attack
         if (attackCooldown > 0) attackCooldown--;
+        if (attackCooldown == 5) {
+            blastColor=new Color(255,255,255,0);
+            atk2.setBounds(screenX + hitBox.x,screenY + hitBox.y,hitBox.width,hitBox.height);
+        }
         if (keyH.attackPressed && attackCooldown == 0) {
             attackCooldown = 20;
             doAttack();
             applyVelocity();
         }
+        
         //sprite (animation) update
         if(keyH.upPressed || keyH.downPressed || keyH.leftPressed || keyH.rightPressed){
             spriteCounter++;
@@ -187,23 +179,34 @@ public class Player extends Entity {
     }
 
     private void doAttack() {
-        //Build the attack box *in world coordinates*:
+        // 1) Build the attack box *in world coordinates*:
         atk.setBounds(
                 worldX + hitBox.x,
                 worldY + hitBox.y,
                 hitBox.width,
                 hitBox.height
         );
+        atk2.setSize(hitBox.width,hitBox.height);
+        
+        
 
-        //Shift it one sword‐length in the facing direction:
+        // 2) Shift it one sword‐length in the facing direction:
         switch (direction) {
-            case "up":    atk.height += sword.range;atk.y-=sword.range;    break;
-            case "down":  atk.height += sword.range;    break;
-            case "left":  atk.width += sword.range;atk.x-=sword.range;    break;
-            case "right": atk.width += sword.range;    break;
+            case "up":      atk.height += sword.range;atk.y-=sword.range;
+                            atk2.height+=sword.range;atk2.y-=(sword.range+hitBox.height);
+                            blastColor=new Color(255,255,255,255);    break;
+            case "down":    atk.height += sword.range;
+                            atk2.height+=sword.range;atk2.y+=hitBox.height;
+                            blastColor=new Color(255,255,255,255);    break;
+            case "left":    atk.width += sword.range;atk.x-=sword.range; 
+                            atk2.width+=sword.range;atk2.x-=sword.range+hitBox.width;
+                            blastColor=new Color(255,255,255,255);    break;
+            case "right":   atk.width += sword.range;
+                            atk2.width+=sword.range;atk2.x+=hitBox.width;
+                            blastColor=new Color(255,255,255,255);     break;
         }
 
-        //Damage and knock back any zombies it overlaps:
+        // 3) Damage and knock back any zombies it overlaps:
         for (Zombie z : gp.zombies) {
             if (z.alive && atk.intersects(
                     new Rectangle(z.worldX+z.hitBox.x,
@@ -212,7 +215,10 @@ public class Player extends Entity {
                             z.hitBox.height
                     )
             )) {
-                z.takeDamage(sword.damage);
+                if(!z.takeDamage(sword.damage)){
+                    gp.ui.shrinkBar();
+                    gp.zombiesKilledTotal++;
+                }
                 z.applyKnockback(sword.knockback, direction);
             }
         }
@@ -241,10 +247,9 @@ public class Player extends Entity {
 
     public void draw(Graphics2D g2) {
         BufferedImage toDraw = null;
-        g2.setColor(Color.MAGENTA);
-        Rectangle atk2 = atk;
+        g2.setColor(blastColor);
         g2.fill(atk2);   
-        //Decide which sprite to draw:
+        // 1) Decide which sprite to draw:
         if (attackCooldown > 0) {
 
              
@@ -278,7 +283,7 @@ public class Player extends Entity {
             
         }
 
-        // Draw the selected sprite at the player’s screen position:
+        // 2) Draw the selected sprite at the player’s screen position:
         if (toDraw != null) {
             g2.drawImage(toDraw, screenX, screenY, gp.TileSize, gp.TileSize, null);
         } else {
@@ -286,9 +291,14 @@ public class Player extends Entity {
             g2.setColor(Color.MAGENTA);
             g2.fillRect(screenX, screenY, gp.TileSize, gp.TileSize);
         }
-
-        // Debug hitbox (optional):
+        /*
+        //for visual debugging this draws the collision boundary (a semi-transparent red rectangle). jk its aimbot
+        g2.setColor(new Color(255, 0, 0, 100));
+        g2.drawRect(screenX, screenY, gp.TileSize, gp.TileSize);
+        // 3) Debug hitbox (optional):
         g2.setColor(new Color(0, 115, 255, 100));
         g2.fillRect(screenX + hitBox.x, screenY + hitBox.y, hitBox.width, hitBox.height);
+        */
+        // 4) Draw UI elements (health bar, wood count, etc.) after this
     }
 }

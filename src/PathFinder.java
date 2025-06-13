@@ -1,5 +1,3 @@
-
-
 import java.util.ArrayList;
 
 public class PathFinder {
@@ -168,4 +166,3 @@ public class PathFinder {
         }
     }
 }
-

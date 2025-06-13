@@ -17,32 +17,10 @@ public class Zombie extends Entity {
     public int movementY;
     public int actionCounter=0;
     public boolean onPath;
-
+    int spawnX=1;
+    int spawnY=1;
+    int spawnArea;
     private long lastDamageTime = 0;
-
-    public void loseHealth(int dmg) {
-        this.healthS -= dmg;
-        if (this.healthS <= 0 && alive) {
-            onDeath();
-        }
-    }
-
-    public void takeDamage(int dmg) {
-        // If you have a base class takeDamage, you can call super.takeDamage(dmg),
-        // but here's a self-contained version:
-        this.healthS -= dmg;
-        if (this.healthS <= 0 && alive) {
-            onDeath();
-        }
-    }
-
-    public boolean canDamagePlayer() {
-        return System.currentTimeMillis() - lastDamageTime >= 800;
-    }
-
-    public void recordDamageTime() {
-        lastDamageTime = System.currentTimeMillis();
-    }
 
     public Zombie(GamePanel gp){
         super();
@@ -63,15 +41,51 @@ public class Zombie extends Entity {
         hitBox.y=15*gp.scale;
         hitBox.width=12*gp.scale;
         hitBox.height=14*gp.scale;
-
-        worldX=(int)(Math.random()*50)*gp.TileSize;
-        worldY=(int)(Math.random()*50)*gp.TileSize;
-
+        spawnArea=(int)(Math.random()*7);
+        System.out.println(spawnArea);
+        
+        if(spawnArea<=0){
+            spawnX=(int)(Math.random()*20)+16;
+            spawnY=(int)(Math.random()*11)+3;
+        }else if(spawnArea<=1){
+            spawnX=(int)(Math.random()*13)+66;
+            spawnY=(int)(Math.random()*13)+3;
+        }else if(spawnArea<=2){
+            spawnX=(int)(Math.random()*20)+7;
+            spawnY=(int)(Math.random()*19)+47;
+        }else if(spawnArea<=3){
+            spawnX=(int)(Math.random()*23)+44;
+            spawnY=(int)(Math.random()*18)+34;
+        }else if(spawnArea<=5){
+            spawnX=(int)(Math.random()*47)+3;
+            spawnY=(int)(Math.random()*8)+71;
+        }else if(spawnArea<=6){
+            spawnX=(int)(Math.random()*28)+50;
+            spawnY=(int)(Math.random()*8)+71;
+        }
+            
+        worldX=spawnX*gp.TileSize;
+        worldY=spawnY*gp.TileSize;
         //setValues();
         getZombieImage();
         direction = "down";
         spriteCounter = 0;
         spriteNum = 1;
+    }
+
+    public void loseHealth(int dmg) {
+        this.healthS -= dmg;
+        if (this.healthS <= 0 && alive) {
+            onDeath();
+        }
+    }
+
+    public boolean canDamagePlayer() {
+        return System.currentTimeMillis() - lastDamageTime >= 800;
+    }
+
+    public void recordDamageTime() {
+        lastDamageTime = System.currentTimeMillis();
     }
 
     public void getZombieImage(){
@@ -104,7 +118,7 @@ public class Zombie extends Entity {
                 actionCounter=0;
             }
         }else{            
-            int goalCol=(gp.player.worldX+gp.player.hitBox.x)/gp.TileSize  ;
+            int goalCol=(gp.player.worldX+gp.player.hitBox.x)/gp.TileSize;
             int goalRow=(gp.player.worldY +gp.player.hitBox.y)/gp.TileSize;
             searchPath(goalCol, goalRow);
         }
@@ -113,9 +127,8 @@ public class Zombie extends Entity {
         setAction();
             for(int i=0;i<gp.walls.size();i++){
                 if(gp.collisionChecker.checkCollision(this, gp.walls.get(i))){
-                    if(gp.walls.get(i).chop()){
+                    if(gp.walls.get(i).chop(1)){
                         gp.walls.remove(gp.walls.get(i));
-                        System.out.println("chop");
                     }
                 }
                 
@@ -136,23 +149,35 @@ public class Zombie extends Entity {
             case "right":
                 worldX+=speed;
                 break;
-        
             default:
                 break;
         }
         }
+        System.out.println("x: "+worldX/gp.TileSize+" y: "+worldY/gp.TileSize);
 
         spriteCounter++;
         applyVelocity();
-        
+        collisionCheck();   
+    }
+    
+    public void collisionCheck(){
+        if(worldX<=0){
+            worldX=3;
+        }
+        if(worldX>gp.MAX_MAP_WIDTH){
+            worldX=gp.MAX_MAP_WIDTH-2;
+        }
+        if(worldY<=0){
+            worldY=3;
+        }
+        if(worldY>gp.MAX_MAP_HEIGHT){
+            worldY=gp.MAX_MAP_HEIGHT-2;
+        }
     }
 
     @Override
     protected void onDeath() {
         alive = false;
-        // Award score immediately on death:
-        gp.score += 2;
-        System.out.println("Zombie killed! Score is now " + gp.score);
     }
 
     public void draw(Graphics g2){
@@ -171,10 +196,38 @@ public class Zombie extends Entity {
         g2.fillRect(screenX+hitBox.x, screenY+hitBox.y, hitBox.width, hitBox.height);
     }   
     public void searchPath(int goalWorldX, int goalWorldY){
-
+        /*
+        int startX = (worldX)/gp.TileSize; 
+        int startY = (worldY)/gp.TileSize;
+        if(worldX<=0){
+            worldX=3;
+        }
+        if(worldX>gp.MAX_MAP_WIDTH){
+            worldX=gp.MAX_MAP_WIDTH-2;
+        }
+        if(worldY<=0){
+            worldY=3;
+        }
+        if(worldY>gp.MAX_MAP_HEIGHT){
+            worldY=gp.MAX_MAP_HEIGHT-2;
+        }
+        */
         int startX = (worldX+hitBox.x)/gp.TileSize; 
         int startY = (worldY+hitBox.y)/gp.TileSize;
+        if(startX>=gp.MAP_WIDTH){
+            startX--;
+        }
+        if(startX<=0){
+            startX++;
+        }
+        if(startY>=gp.MAP_HEIGHT){
+            startY--;
+        }
+        if(startY<=0){
+            startY++;
+        }
 
+        gp.pathFinder.setNodes(startX, startY, goalWorldX, goalWorldY);
         gp.pathFinder.setNodes(startX, startY, goalWorldX, goalWorldY);
 
         if(gp.pathFinder.search()){

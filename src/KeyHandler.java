@@ -5,12 +5,16 @@ import java.awt.event.KeyListener;
 //Handles what pressed keys does
 public class KeyHandler implements KeyListener{
 
-    public boolean inventoryPressed = false;
+    public boolean inventoryPressed = false;        
     public boolean upPressed, downPressed, rightPressed, leftPressed, enterPressed;
     public String direction;
     public boolean buildFloor, buildWall, chopTree;
     public boolean attackPressed = false;
+    private GamePanel gp;
 
+    public KeyHandler(GamePanel gp){
+        this.gp=gp;
+    }
     @Override
     public void keyTyped(KeyEvent e) {
     }
@@ -18,7 +22,9 @@ public class KeyHandler implements KeyListener{
     @Override
     public void keyPressed(KeyEvent e) {
         int code = e.getKeyCode();
-
+        if (code == KeyEvent.VK_Q) {
+            System.exit(0);
+        }
         if (code == KeyEvent.VK_J) {
             attackPressed = true;
         }
@@ -42,6 +48,13 @@ public class KeyHandler implements KeyListener{
         if (code == KeyEvent.VK_R) buildWall = true;
         if (code == KeyEvent.VK_SPACE) chopTree = true;
         if (code == KeyEvent.VK_B)   inventoryPressed = true;
+        if(code == KeyEvent.VK_P){
+            if(!gp.GAME_STATE.equals("play")||gp.GAME_STATE.equals("dead")){
+                gp.GAME_STATE="play";
+            }else{
+                gp.GAME_STATE="paused";
+            }
+        }
 
     }
 
@@ -70,6 +83,7 @@ public class KeyHandler implements KeyListener{
         if (code == KeyEvent.VK_F) buildFloor = false;
         if (code == KeyEvent.VK_R) buildWall = false;
         if (code == KeyEvent.VK_SPACE) chopTree = false;
+        if (code == KeyEvent.VK_B)   inventoryPressed = false;
     }
 
 }

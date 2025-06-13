@@ -35,7 +35,7 @@ public class TileMaker {
             tile[1] = new Tile();
             tile[1].image = ImageIO.read(getClass().getResourceAsStream("/resources/tiles/Tile_Grass.png"));//1
             tile[2] = new Tile();
-            tile[2].image = ImageIO.read(getClass().getResourceAsStream("/resources/tiles/Tile_Sand_Top.png"));//2
+            tile[2].image = ImageIO.read(getClass().getResourceAsStream("/resources/tiles/Tile_Sand.png"));//2
             tile[3] = new Tile();
             tile[3].image = ImageIO.read(getClass().getResourceAsStream("/resources/tiles/Tile_Sand_Bottom.png"));//3
             tile[4] = new Tile();

@@ -20,9 +20,9 @@ public class Wall extends Entity {
 
         //create a simple colored rectangle as placeholder image
         createWallImage(gp.TileSize);
-        this.hitBox.width=gp.TileSize+2;
-        this.hitBox.height=gp.TileSize;
-        this.hitBox.translate(1, 0);
+        this.hitBox.width=gp.TileSize+4;
+        this.hitBox.height=gp.TileSize+4;
+        this.hitBox.translate(-2, -2);
     }
 
     private void createWallImage(int tileSize) {
@@ -31,11 +31,11 @@ public class Wall extends Entity {
         Graphics2D g2 = wallImage.createGraphics();
 
         //fill with gray color for stone wall
-        g2.setColor(new Color(128, 128, 128)); // Gray
+        g2.setColor(new Color(64, 101, 16)); // Gray
         g2.fillRect(0, 0, tileSize, tileSize);
 
         //some stone texture with darker rectangles
-        g2.setColor(new Color(96, 96, 96));
+        g2.setColor(new Color(207, 133, 71));
         //should create brick pattern
         int brickHeight = tileSize / 4;
         int brickWidth = tileSize / 3;
@@ -56,7 +56,7 @@ public class Wall extends Entity {
         }
 
         //darker border for nice textutre
-        g2.setColor(new Color(64, 64, 64));
+        g2.setColor(new Color(138, 69, 39));
         g2.setStroke(new BasicStroke(2));
         g2.drawRect(1, 1, tileSize-2, tileSize-2);
 
@@ -64,7 +64,7 @@ public class Wall extends Entity {
         int screenY = worldY - gp.player.worldY + gp.player.screenY ;
 
         
-        g2.setColor(new Color(0, 115, 255, 255));
+        g2.setColor(new Color(15, 17, 26, 255));
         g2.fillRect(screenX+hitBox.x, screenY+hitBox.y, hitBox.width, hitBox.height);
 
         g2.dispose();
@@ -72,10 +72,10 @@ public class Wall extends Entity {
         //bufferedImage to the Image field
         this.image = wallImage;
     }
-    public boolean chop() {
-        hp -= 1; // Damage per chop
+    public boolean chop(int dmg) {
+        hp -= dmg; // Damage per chop
         if(hp <= 0) {
-            gp.tileM.mapTileNum[worldY/gp.TileSize][worldX/gp.TileSize]=1;
+            gp.tileM.mapTileNum[worldY/gp.TileSize][worldX/gp.TileSize]=gp.tileM.mapTileNumOriginal[worldY/gp.TileSize][worldX/gp.TileSize];
             return true;
         }
         return false;

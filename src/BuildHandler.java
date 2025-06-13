@@ -13,9 +13,9 @@ public class BuildHandler {
     }
 
     public Point getTargetTile() {
-        int playerX = (player.worldX + gp.TileSize / 2) / gp.TileSize;
-        int playerY = (player.worldY + gp.TileSize - gp.TileSize / 5) / gp.TileSize;
-
+        
+        int playerX=24*gp.TileSize;
+        int playerY=24*gp.TileSize;
         int dx = 0, dy = 0;
         switch (player.direction) {
             case "up": dy = -1; break;
@@ -23,7 +23,20 @@ public class BuildHandler {
             case "left": dx = -1; break;
             case "right": dx = 1; break;
         }
-
+        switch (player.direction) {
+            case "up": 
+            playerX = (player.worldX + gp.TileSize / 2) / gp.TileSize;
+            playerY = (player.worldY + (player.height-player.hitBox.height-(player.height-player.hitBox.y-player.hitBox.height)/gp.scale)) / gp.TileSize; break;
+            case "down":
+            playerX = (player.worldX + gp.TileSize / 2) / gp.TileSize;
+            playerY = (player.worldY + (player.height-(player.hitBox.y)/gp.scale)) / gp.TileSize; break;
+            case "left":
+            playerX = (player.worldX + 10*gp.scale) / gp.TileSize;
+            playerY = (player.worldY + gp.TileSize / 2) / gp.TileSize; break;
+            case "right":
+            playerX = (player.worldX + 22*gp.scale) / gp.TileSize;
+            playerY = (player.worldY + gp.TileSize / 2) / gp.TileSize; break;
+        }
         return new Point(playerX + dx, playerY + dy);
     }
 
@@ -60,7 +73,7 @@ public class BuildHandler {
             // Can only build floors on water
             if(gp.tileM.mapTileNum[targetY][targetX] == 0 && player.spendWood(1)) {
                 gp.floors.add(new Floor(gp, targetX * gp.TileSize, targetY * gp.TileSize));
-                gp.tileM.mapTileNum[targetY][targetX]=1;
+                gp.tileM.mapTileNum[targetY][targetX]=10;
             }
         }
         else if(keyH.buildWall) {

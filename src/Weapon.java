@@ -11,9 +11,9 @@ public class Weapon {
     public BufferedImage[] swingFrames;
 
     public Weapon(String name, int damage, int range, int knockback) {
-        this.name = name;
-        this.damage= damage;
-        this.range = range;
+        this.name      = name;
+        this.damage    = damage;
+        this.range     = range;
         this.knockback = knockback;
         loadSprites();
     }
